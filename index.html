@@ -87,10 +87,10 @@
         100% { transform: rotate(-90deg); }
       }
 
-      /* CSS Media Query: Detects mobile touch devices in Portrait mode */
-      @media pointer: coarse and (orientation: portrait) {
+/* UPDATED MOBILE PORTRAIT DETECTION */
+      @media screen and (max-aspect-ratio: 13/16) and (max-width: 767px) {
         #orientation-mask {
-          display: flex; /* Shows the mask on phones in portrait */
+          display: flex; /* Force show on any skinny mobile screen */
         }
       }
     </style>
