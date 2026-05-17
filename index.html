@@ -59,7 +59,6 @@
         text-align: center;
       }
 
-      /* The visual rotation icon */
       .phone-icon {
         width: 50px;
         height: 80px;
@@ -87,22 +86,60 @@
         100% { transform: rotate(-90deg); }
       }
 
-/* UPDATED MOBILE PORTRAIT DETECTION */
+      /* UPDATED MOBILE PORTRAIT DETECTION */
       @media screen and (max-aspect-ratio: 13/16) and (max-width: 767px) {
         #orientation-mask {
           display: flex; /* Force show on any skinny mobile screen */
         }
       }
+
+      /* --- NEW: Fullscreen Start Overlay --- */
+      #fullscreen-overlay {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100vw;
+        height: 100vh;
+        background-color: rgba(0, 0, 0, 0.85); /* Dark transparent background */
+        z-index: 8000; /* Under orientation mask, but over the game */
+        display: flex;
+        justify-content: center;
+        align-items: center;
+      }
+
+      #fullscreen-btn {
+        background-color: #4CAF50;
+        color: white;
+        border: none;
+        padding: 20px 40px;
+        font-size: 1.5rem;
+        border-radius: 12px;
+        cursor: pointer;
+        font-family: sans-serif;
+        box-shadow: 0px 4px 10px rgba(0,0,0,0.5);
+        transition: transform 0.1s ease;
+      }
+
+      #fullscreen-btn:active {
+        transform: scale(0.95); /* Little click animation */
+      }
     </style>
   </head>
   <body>
 
+    <!-- 1. Portrait Warning -->
     <div id="orientation-mask">
       <div class="phone-icon"></div>
       <h2>Please Rotate Your Device</h2>
       <p>This game is best played in Landscape Mode.</p>
     </div>
 
+    <!-- 2. Fullscreen Trigger Button -->
+    <div id="fullscreen-overlay">
+      <button id="fullscreen-btn">Tap OK to Play Fullscreen</button>
+    </div>
+
+    <!-- 3. The Game -->
     <div class="game-container">
       <canvas id="loadingCanvas" oncontextmenu="event.preventDefault()" width="960" height="540"></canvas>
       <canvas id="canvas" oncontextmenu="event.preventDefault()" width="960" height="540" style="display: none;"></canvas>
@@ -116,31 +153,37 @@
         loadingContext.fillStyle = "black";
         loadingContext.fillRect(0, 0, canvas.width, canvas.height);
       }
-// Function to lock the game into full screen and hide address bars
-function requestFullScreen() {
-  var container = document.documentElement; // Targets the whole webpage
 
-  if (container.requestFullscreen) {
-    container.requestFullscreen();
-  } else if (container.mozRequestFullScreen) { /* Firefox */
-    container.mozRequestFullScreen();
-  } else if (container.webkitRequestFullscreen) { /* Chrome, Safari and Opera */
-    container.webkitRequestFullscreen();
-  } else if (container.msRequestFullscreen) { /* IE/Edge */
-    container.msRequestFullscreen();
-  }
-  
-  // Try to lock the screen orientation to landscape if the device supports it
-  if (screen.orientation && screen.orientation.lock) {
-    screen.orientation.lock("landscape").catch(function(error) {
-      console.log("Orientation lock blocked or unsupported:", error);
-    });
-  }
-}
+      // Function to lock the game into full screen and hide address bars
+      function requestFullScreen() {
+        var container = document.documentElement; // Targets the whole webpage
 
-// Trigger full screen on the very first touch/click on the webpage
-window.addEventListener('click', requestFullScreen, { once: true });
-window.addEventListener('touchstart', requestFullScreen, { once: true });
+        if (container.requestFullscreen) {
+          container.requestFullscreen();
+        } else if (container.mozRequestFullScreen) { /* Firefox */
+          container.mozRequestFullScreen();
+        } else if (container.webkitRequestFullscreen) { /* Chrome, Safari and Opera */
+          container.webkitRequestFullscreen();
+        } else if (container.msRequestFullscreen) { /* IE/Edge */
+          container.msRequestFullscreen();
+        }
+        
+        // Try to lock the screen orientation to landscape
+        if (screen.orientation && screen.orientation.lock) {
+          screen.orientation.lock("landscape").catch(function(error) {
+            console.log("Orientation lock blocked or unsupported:", error);
+          });
+        }
+
+        // Hide the overlay once they've clicked it
+        document.getElementById('fullscreen-overlay').style.display = 'none';
+      }
+
+      // Trigger full screen when they click the specific OK button, instead of anywhere on the screen
+      var fsBtn = document.getElementById('fullscreen-btn');
+      fsBtn.addEventListener('click', requestFullScreen, { once: true });
+      fsBtn.addEventListener('touchstart', requestFullScreen, { once: true });
+
       var Module = {
         arguments: ["./game.love"],
         INITIAL_MEMORY: 64000000,
