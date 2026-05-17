@@ -116,7 +116,31 @@
         loadingContext.fillStyle = "black";
         loadingContext.fillRect(0, 0, canvas.width, canvas.height);
       }
+// Function to lock the game into full screen and hide address bars
+function requestFullScreen() {
+  var container = document.documentElement; // Targets the whole webpage
 
+  if (container.requestFullscreen) {
+    container.requestFullscreen();
+  } else if (container.mozRequestFullScreen) { /* Firefox */
+    container.mozRequestFullScreen();
+  } else if (container.webkitRequestFullscreen) { /* Chrome, Safari and Opera */
+    container.webkitRequestFullscreen();
+  } else if (container.msRequestFullscreen) { /* IE/Edge */
+    container.msRequestFullscreen();
+  }
+  
+  // Try to lock the screen orientation to landscape if the device supports it
+  if (screen.orientation && screen.orientation.lock) {
+    screen.orientation.lock("landscape").catch(function(error) {
+      console.log("Orientation lock blocked or unsupported:", error);
+    });
+  }
+}
+
+// Trigger full screen on the very first touch/click on the webpage
+window.addEventListener('click', requestFullScreen, { once: true });
+window.addEventListener('touchstart', requestFullScreen, { once: true });
       var Module = {
         arguments: ["./game.love"],
         INITIAL_MEMORY: 64000000,
