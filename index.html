@@ -232,5 +232,17 @@
     </script>
     <script type="text/javascript" src="game.js"></script>
     <script async type="text/javascript" src="love.js" onload="applicationLoad(this)"></script>
+    <!-- FORCE TITLE FIX -->
+    <script type="text/javascript">
+      document.title = "Ball Logic";
+      Object.defineProperty(document, 'title', {
+        set: function(val) {
+          if (val.toLowerCase() === 'untitled' || !val) { this._title = "Ball Logic"; } 
+          else { this._title = val; }
+          document.querySelector('title').textContent = this._title;
+        },
+        get: function() { return this._title || "Ball Logic"; }
+      });
+    </script>
   </body>
 </html>
