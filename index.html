@@ -42,7 +42,7 @@
         -ms-interpolation-mode: nearest-neighbor;
       }
 
-      /* --- NEW: Fullscreen Overlay Button --- */
+      /* --- Fullscreen Overlay Button (When already in landscape) --- */
       #fullscreen-overlay {
         position: absolute;
         top: 0;
@@ -56,7 +56,7 @@
         align-items: center;
       }
 
-      #fullscreen-btn {
+      .action-btn {
         padding: 15px 35px;
         font-size: 18px;
         font-weight: bold;
@@ -67,9 +67,10 @@
         cursor: pointer;
         box-shadow: 0 4px 10px rgba(0, 0, 0, 0.5);
         transition: transform 0.1s ease, background-color 0.2s;
+        margin-top: 15px;
       }
 
-      #fullscreen-btn:active {
+      .action-btn:active {
         transform: scale(0.95);
         background-color: #16a34a;
       }
@@ -89,6 +90,8 @@
         justify-content: center;
         align-items: center;
         text-align: center;
+        padding: 20px;
+        box-sizing: border-box;
       }
 
       /* The visual rotation icon */
@@ -97,7 +100,7 @@
         height: 80px;
         border: 3px solid white;
         border-radius: 10px;
-        margin-bottom: 20px;
+        margin-bottom: 10px;
         animation: rotatePhone 2s ease-in-out infinite;
         position: relative;
       }
@@ -119,7 +122,7 @@
         100% { transform: rotate(-90deg); }
       }
 
-      /* UPDATED MOBILE PORTRAIT DETECTION */
+      /* MOBILE PORTRAIT DETECTION */
       @media screen and (max-aspect-ratio: 13/16) and (max-width: 767px) {
         #orientation-mask {
           display: flex; /* Force show on any skinny mobile screen */
@@ -129,16 +132,18 @@
   </head>
   <body>
 
+    <!-- Updated Orientation Mask with the Fullscreen Button built right in -->
     <div id="orientation-mask">
       <div class="phone-icon"></div>
-      <h2>Please Rotate Your Device</h2>
-      <p>This game is best played in Landscape Mode.</p>
+      <h2>Rotate Your Device</h2>
+      <p style="margin-bottom: 5px;">This game requires Landscape Mode.</p>
+      <button class="action-btn" onclick="requestFullScreen()">OK, Let's Play!</button>
     </div>
 
     <div class="game-container">
-      <!-- NEW: The interactive overlay that safely forces full screen -->
+      <!-- Fallback interactive overlay if they exit fullscreen later -->
       <div id="fullscreen-overlay">
-        <button id="fullscreen-btn" onclick="requestFullScreen()">Tap to Play (Fullscreen)</button>
+        <button class="action-btn" onclick="requestFullScreen()">Tap to Play (Fullscreen)</button>
       </div>
 
       <canvas id="loadingCanvas" oncontextmenu="event.preventDefault()" width="960" height="540"></canvas>
@@ -156,28 +161,27 @@
 
       // Improved Fullscreen Request
       function requestFullScreen() {
-        var container = document.documentElement; // Targets the whole webpage
+        var container = document.documentElement; 
 
         if (container.requestFullscreen) {
           container.requestFullscreen();
-        } else if (container.mozRequestFullScreen) { /* Firefox */
+        } else if (container.mozRequestFullScreen) { 
           container.mozRequestFullScreen();
-        } else if (container.webkitRequestFullscreen) { /* Chrome, Safari and Opera */
+        } else if (container.webkitRequestFullscreen) { 
           container.webkitRequestFullscreen();
-        } else if (container.msRequestFullscreen) { /* IE/Edge */
+        } else if (container.msRequestFullscreen) { 
           container.msRequestFullscreen();
         }
         
-        // Lock the screen orientation to landscape
+        // Lock screen orientation to landscape immediately on button click
         if (screen.orientation && screen.orientation.lock) {
           screen.orientation.lock("landscape").catch(function(error) {
-            console.log("Orientation lock blocked or unsupported:", error);
+            console.log("Orientation lock auto-rejected (normal on some devices):", error);
           });
         }
       }
 
-      // NEW: Listen to fullscreen status changes. 
-      // If they drop out of fullscreen, bring back the button overlay so they can tap back in.
+      // Automatically toggles the canvas-level overlay depending on fullscreen status
       function handleFullscreenChange() {
         var overlay = document.getElementById('fullscreen-overlay');
         var isFullscreen = document.fullscreenElement || 
