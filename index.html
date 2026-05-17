@@ -3,7 +3,7 @@
   <head>
     <script src="coi-serviceworker.js"></script>
     <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no, user-scalable=no">
     <title>Ball Logic</title>
     <style>
       /* Centering the game and keeping the background black */
@@ -17,21 +17,14 @@
         height: 100vh;
         width: 100vw;
         overflow: hidden;
+        font-family: sans-serif;
       }
 
       .game-container {
         position: relative;
-        /* Maintains the 16:9 aspect ratio */
         aspect-ratio: 960 / 540;
-        
-        /* 
-          Scales dynamically to fill the screen up to 90% of whichever 
-          dimension is limiting it (width or height), ensuring a 5% margin 
-          all around on full screen.
-        */
         width: min(90vw, calc(90vh * (16 / 9)));
         height: min(90vh, calc(90vw * (9 / 16)));
-        
         display: flex;
         justify-content: center;
         align-items: center;
@@ -42,15 +35,73 @@
         width: 100%;
         height: 100%;
         background-color: black;
-        image-rendering: optimizeSpeed;             /* Older browsers */
-        image-rendering: -moz-crisp-edges;          /* Firefox */
-        image-rendering: -webkit-optimize-contrast; /* Safari */
-        image-rendering: pixelated;                 /* Modern browsers */
-        -ms-interpolation-mode: nearest-neighbor;   /* IE */
+        image-rendering: optimizeSpeed;
+        image-rendering: -moz-crisp-edges;
+        image-rendering: -webkit-optimize-contrast;
+        image-rendering: pixelated;
+        -ms-interpolation-mode: nearest-neighbor;
+      }
+
+      /* --- The Mobile Rotation Mask --- */
+      #orientation-mask {
+        display: none; /* Hidden by default */
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100vw;
+        height: 100vh;
+        background-color: #111111;
+        z-index: 9999; /* Sit on top of everything */
+        color: white;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+        text-align: center;
+      }
+
+      /* The visual rotation icon */
+      .phone-icon {
+        width: 50px;
+        height: 80px;
+        border: 3px solid white;
+        border-radius: 10px;
+        margin-bottom: 20px;
+        animation: rotatePhone 2s ease-in-out infinite;
+        position: relative;
+      }
+      .phone-icon::after {
+        content: '';
+        position: absolute;
+        bottom: 5px;
+        left: 50%;
+        transform: translateX(-50%);
+        width: 8px;
+        height: 8px;
+        border-radius: 50%;
+        background-color: white;
+      }
+
+      @keyframes rotatePhone {
+        0% { transform: rotate(0deg); }
+        50% { transform: rotate(-90deg); }
+        100% { transform: rotate(-90deg); }
+      }
+
+      /* CSS Media Query: Detects mobile touch devices in Portrait mode */
+      @media pointer: coarse and (orientation: portrait) {
+        #orientation-mask {
+          display: flex; /* Shows the mask on phones in portrait */
+        }
       }
     </style>
   </head>
   <body>
+
+    <div id="orientation-mask">
+      <div class="phone-icon"></div>
+      <h2>Please Rotate Your Device</h2>
+      <p>This game is best played in Landscape Mode.</p>
+    </div>
 
     <div class="game-container">
       <canvas id="loadingCanvas" oncontextmenu="event.preventDefault()" width="960" height="540"></canvas>
