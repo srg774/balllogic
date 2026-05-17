@@ -1,1 +1,245 @@
+<!doctype html>
+<html lang="en-us">
+  <head>
+    <script src="coi-serviceworker.js"></script>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no, user-scalable=no">
+    <title>Ball Logic</title>
+    <style>
+      /* Centering the game and keeping the background black */
+      body {
+        background-color: black !important;
+        margin: 0;
+        padding: 0;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        height: 100vh;
+        width: 100vw;
+        overflow: hidden;
+        font-family: sans-serif;
+      }
 
+      .game-container {
+        position: relative;
+        aspect-ratio: 960 / 540;
+        width: min(90vw, calc(90vh * (16 / 9)));
+        height: min(90vh, calc(90vw * (9 / 16)));
+        display: flex;
+        justify-content: center;
+        align-items: center;
+      }
+
+      canvas {
+        display: block;
+        width: 100%;
+        height: 100%;
+        background-color: black;
+        image-rendering: optimizeSpeed;
+        image-rendering: -moz-crisp-edges;
+        image-rendering: -webkit-optimize-contrast;
+        image-rendering: pixelated;
+        -ms-interpolation-mode: nearest-neighbor;
+      }
+
+      /* --- NEW: Fullscreen Overlay Button --- */
+      #fullscreen-overlay {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0, 0, 0, 0.75);
+        z-index: 50;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+      }
+
+      #fullscreen-btn {
+        padding: 15px 35px;
+        font-size: 18px;
+        font-weight: bold;
+        color: white;
+        background-color: #22c55e; /* Clean Game Green */
+        border: none;
+        border-radius: 8px;
+        cursor: pointer;
+        box-shadow: 0 4px 10px rgba(0, 0, 0, 0.5);
+        transition: transform 0.1s ease, background-color 0.2s;
+      }
+
+      #fullscreen-btn:active {
+        transform: scale(0.95);
+        background-color: #16a34a;
+      }
+
+      /* --- The Mobile Rotation Mask --- */
+      #orientation-mask {
+        display: none; /* Hidden by default */
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100vw;
+        height: 100vh;
+        background-color: #111111;
+        z-index: 9999; /* Sit on top of everything */
+        color: white;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+        text-align: center;
+      }
+
+      /* The visual rotation icon */
+      .phone-icon {
+        width: 50px;
+        height: 80px;
+        border: 3px solid white;
+        border-radius: 10px;
+        margin-bottom: 20px;
+        animation: rotatePhone 2s ease-in-out infinite;
+        position: relative;
+      }
+      .phone-icon::after {
+        content: '';
+        position: absolute;
+        bottom: 5px;
+        left: 50%;
+        transform: translateX(-50%);
+        width: 8px;
+        height: 8px;
+        border-radius: 50%;
+        background-color: white;
+      }
+
+      @keyframes rotatePhone {
+        0% { transform: rotate(0deg); }
+        50% { transform: rotate(-90deg); }
+        100% { transform: rotate(-90deg); }
+      }
+
+      /* UPDATED MOBILE PORTRAIT DETECTION */
+      @media screen and (max-aspect-ratio: 13/16) and (max-width: 767px) {
+        #orientation-mask {
+          display: flex; /* Force show on any skinny mobile screen */
+        }
+      }
+    </style>
+  </head>
+  <body>
+
+    <div id="orientation-mask">
+      <div class="phone-icon"></div>
+      <h2>Please Rotate Your Device</h2>
+      <p>This game is best played in Landscape Mode.</p>
+    </div>
+
+    <div class="game-container">
+      <!-- NEW: The interactive overlay that safely forces full screen -->
+      <div id="fullscreen-overlay">
+        <button id="fullscreen-btn" onclick="requestFullScreen()">Tap to Play (Fullscreen)</button>
+      </div>
+
+      <canvas id="loadingCanvas" oncontextmenu="event.preventDefault()" width="960" height="540"></canvas>
+      <canvas id="canvas" oncontextmenu="event.preventDefault()" width="960" height="540" style="display: none;"></canvas>
+    </div>
+
+<script type='text/javascript'>
+  var loadingContext = document.getElementById('loadingCanvas').getContext('2d');
+  
+  function drawLoadingText(text) {
+    var canvas = loadingContext.canvas;
+    loadingContext.fillStyle = "black";
+    loadingContext.fillRect(0, 0, canvas.width, canvas.height);
+  }
+
+  // NEW: Track if the browser actually allowed true fullscreen
+  var achievedFullscreen = false;
+
+  // Improved Fullscreen Request with Inline Fallback
+  function requestFullScreen() {
+    var container = document.documentElement; 
+    
+    // Force hide the overlay immediately so it's playable inline if fullscreen fails
+    document.getElementById('fullscreen-overlay').style.display = 'none';
+
+    if (container.requestFullscreen) {
+      container.requestFullscreen().catch(err => console.log("Fullscreen blocked by iframe:", err));
+    } else if (container.mozRequestFullScreen) {
+      container.mozRequestFullScreen();
+    } else if (container.webkitRequestFullscreen) {
+      container.webkitRequestFullscreen();
+    } else if (container.msRequestFullscreen) {
+      container.msRequestFullscreen();
+    }
+    
+    if (screen.orientation && screen.orientation.lock) {
+      screen.orientation.lock("landscape").catch(function(error) {
+        console.log("Orientation lock blocked:", error);
+      });
+    }
+  }
+
+  // Safe Fullscreen Change Listener
+  function handleFullscreenChange() {
+    var overlay = document.getElementById('fullscreen-overlay');
+    var isFullscreen = !!(document.fullscreenElement || 
+                           document.webkitFullscreenElement || 
+                           document.mozFullScreenElement || 
+                           document.msFullscreenElement);
+
+    if (isFullscreen) {
+      overlay.style.display = 'none';
+      achievedFullscreen = true; 
+    } else {
+      // Only bring back the overlay if they were actually in true fullscreen and exited
+      if (achievedFullscreen) {
+        overlay.style.display = 'flex';
+        achievedFullscreen = false;
+      }
+    }
+  }
+
+  document.addEventListener('fullscreenchange', handleFullscreenChange);
+  document.addEventListener('webkitfullscreenchange', handleFullscreenChange);
+  document.addEventListener('mozfullscreenchange', handleFullscreenChange);
+  document.addEventListener('MSFullscreenChange', handleFullscreenChange);
+
+  var Module = {
+    arguments: ["./game.love"],
+    INITIAL_MEMORY: 64000000,
+    printErr: console.error.bind(console),
+    canvas: (function() {
+      var canvas = document.getElementById('canvas');
+      canvas.addEventListener("webglcontextlost", function(e) { 
+        alert('WebGL context lost. You will need to reload the page.'); 
+        e.preventDefault(); 
+      }, false);
+      return canvas;
+    })(),
+    setStatus: function(text) {
+      if (text) {
+        drawLoadingText(text);
+      } else if (Module.remainingDependencies === 0) {
+        document.getElementById('loadingCanvas').style.display = 'none';
+        document.getElementById('canvas').style.display = 'block';
+      }
+    },
+    totalDependencies: 0,
+    remainingDependencies: 0,
+    monitorRunDependencies: function(left) {
+      this.remainingDependencies = left;
+      this.totalDependencies = Math.max(this.totalDependencies, left);
+      Module.setStatus(left ? 'Preparing...' : '');
+    }
+  };
+
+  var applicationLoad = function(e) {
+    Love(Module);
+  }
+</script>
+    <script type="text/javascript" src="game.js"></script>
+    <script async type="text/javascript" src="love.js" onload="applicationLoad(this)"></script>
+  </body>
+</html>
