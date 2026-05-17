@@ -42,6 +42,38 @@
         -ms-interpolation-mode: nearest-neighbor;
       }
 
+      /* --- NEW: Fullscreen Overlay Button --- */
+      #fullscreen-overlay {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0, 0, 0, 0.75);
+        z-index: 50;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+      }
+
+      #fullscreen-btn {
+        padding: 15px 35px;
+        font-size: 18px;
+        font-weight: bold;
+        color: white;
+        background-color: #22c55e; /* Clean Game Green */
+        border: none;
+        border-radius: 8px;
+        cursor: pointer;
+        box-shadow: 0 4px 10px rgba(0, 0, 0, 0.5);
+        transition: transform 0.1s ease, background-color 0.2s;
+      }
+
+      #fullscreen-btn:active {
+        transform: scale(0.95);
+        background-color: #16a34a;
+      }
+
       /* --- The Mobile Rotation Mask --- */
       #orientation-mask {
         display: none; /* Hidden by default */
@@ -87,7 +119,7 @@
         100% { transform: rotate(-90deg); }
       }
 
-/* UPDATED MOBILE PORTRAIT DETECTION */
+      /* UPDATED MOBILE PORTRAIT DETECTION */
       @media screen and (max-aspect-ratio: 13/16) and (max-width: 767px) {
         #orientation-mask {
           display: flex; /* Force show on any skinny mobile screen */
@@ -104,6 +136,11 @@
     </div>
 
     <div class="game-container">
+      <!-- NEW: The interactive overlay that safely forces full screen -->
+      <div id="fullscreen-overlay">
+        <button id="fullscreen-btn" onclick="requestFullScreen()">Tap to Play (Fullscreen)</button>
+      </div>
+
       <canvas id="loadingCanvas" oncontextmenu="event.preventDefault()" width="960" height="540"></canvas>
       <canvas id="canvas" oncontextmenu="event.preventDefault()" width="960" height="540" style="display: none;"></canvas>
     </div>
@@ -116,31 +153,50 @@
         loadingContext.fillStyle = "black";
         loadingContext.fillRect(0, 0, canvas.width, canvas.height);
       }
-// Function to lock the game into full screen and hide address bars
-function requestFullScreen() {
-  var container = document.documentElement; // Targets the whole webpage
 
-  if (container.requestFullscreen) {
-    container.requestFullscreen();
-  } else if (container.mozRequestFullScreen) { /* Firefox */
-    container.mozRequestFullScreen();
-  } else if (container.webkitRequestFullscreen) { /* Chrome, Safari and Opera */
-    container.webkitRequestFullscreen();
-  } else if (container.msRequestFullscreen) { /* IE/Edge */
-    container.msRequestFullscreen();
-  }
-  
-  // Try to lock the screen orientation to landscape if the device supports it
-  if (screen.orientation && screen.orientation.lock) {
-    screen.orientation.lock("landscape").catch(function(error) {
-      console.log("Orientation lock blocked or unsupported:", error);
-    });
-  }
-}
+      // Improved Fullscreen Request
+      function requestFullScreen() {
+        var container = document.documentElement; // Targets the whole webpage
 
-// Trigger full screen on the very first touch/click on the webpage
-window.addEventListener('click', requestFullScreen, { once: true });
-window.addEventListener('touchstart', requestFullScreen, { once: true });
+        if (container.requestFullscreen) {
+          container.requestFullscreen();
+        } else if (container.mozRequestFullScreen) { /* Firefox */
+          container.mozRequestFullScreen();
+        } else if (container.webkitRequestFullscreen) { /* Chrome, Safari and Opera */
+          container.webkitRequestFullscreen();
+        } else if (container.msRequestFullscreen) { /* IE/Edge */
+          container.msRequestFullscreen();
+        }
+        
+        // Lock the screen orientation to landscape
+        if (screen.orientation && screen.orientation.lock) {
+          screen.orientation.lock("landscape").catch(function(error) {
+            console.log("Orientation lock blocked or unsupported:", error);
+          });
+        }
+      }
+
+      // NEW: Listen to fullscreen status changes. 
+      // If they drop out of fullscreen, bring back the button overlay so they can tap back in.
+      function handleFullscreenChange() {
+        var overlay = document.getElementById('fullscreen-overlay');
+        var isFullscreen = document.fullscreenElement || 
+                           document.webkitFullscreenElement || 
+                           document.mozFullScreenElement || 
+                           document.msFullscreenElement;
+
+        if (isFullscreen) {
+          overlay.style.display = 'none';
+        } else {
+          overlay.style.display = 'flex';
+        }
+      }
+
+      document.addEventListener('fullscreenchange', handleFullscreenChange);
+      document.addEventListener('webkitfullscreenchange', handleFullscreenChange);
+      document.addEventListener('mozfullscreenchange', handleFullscreenChange);
+      document.addEventListener('MSFullscreenChange', handleFullscreenChange);
+
       var Module = {
         arguments: ["./game.love"],
         INITIAL_MEMORY: 64000000,
