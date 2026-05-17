@@ -1,12 +1,11 @@
 <!doctype html>
 <html lang="en-us">
   <head>
-    <script src="coi-serviceworker.js"></script>
+    <!-- Note: coi-serviceworker script removed as it is no longer needed -->
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no, user-scalable=no">
     <title>Ball Logic</title>
     <style>
-      /* Centering the game and keeping the background black */
       body {
         background-color: black !important;
         margin: 0;
@@ -42,16 +41,15 @@
         -ms-interpolation-mode: nearest-neighbor;
       }
 
-      /* --- The Mobile Rotation Mask --- */
       #orientation-mask {
-        display: none; /* Hidden by default */
+        display: none;
         position: fixed;
         top: 0;
         left: 0;
         width: 100vw;
         height: 100vh;
         background-color: #111111;
-        z-index: 9999; /* Sit on top of everything */
+        z-index: 9999;
         color: white;
         flex-direction: column;
         justify-content: center;
@@ -59,7 +57,6 @@
         text-align: center;
       }
 
-      /* The visual rotation icon */
       .phone-icon {
         width: 50px;
         height: 80px;
@@ -87,10 +84,9 @@
         100% { transform: rotate(-90deg); }
       }
 
-      /* MOBILE PORTRAIT DETECTION */
       @media screen and (max-aspect-ratio: 13/16) and (max-width: 767px) {
         #orientation-mask {
-          display: flex; /* Force show on any skinny mobile screen */
+          display: flex;
         }
       }
     </style>
