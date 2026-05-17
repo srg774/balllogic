@@ -1,0 +1,104 @@
+<!doctype html>
+<html lang="en-us">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    <title>Ball Logic</title>
+    <style>
+      /* Centering the game and keeping the background black */
+      body {
+        background-color: black !important;
+        margin: 0;
+        padding: 0;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        height: 100vh;
+        width: 100vw;
+        overflow: hidden;
+      }
+
+      .game-container {
+        position: relative;
+        /* Maintains the 16:9 aspect ratio */
+        aspect-ratio: 960 / 540;
+        
+        /* 
+          Scales dynamically to fill the screen up to 90% of whichever 
+          dimension is limiting it (width or height), ensuring a 5% margin 
+          all around on full screen.
+        */
+        width: min(90vw, calc(90vh * (16 / 9)));
+        height: min(90vh, calc(90vw * (9 / 16)));
+        
+        display: flex;
+        justify-content: center;
+        align-items: center;
+      }
+
+      canvas {
+        display: block;
+        width: 100%;
+        height: 100%;
+        background-color: black;
+        image-rendering: optimizeSpeed;             /* Older browsers */
+        image-rendering: -moz-crisp-edges;          /* Firefox */
+        image-rendering: -webkit-optimize-contrast; /* Safari */
+        image-rendering: pixelated;                 /* Modern browsers */
+        -ms-interpolation-mode: nearest-neighbor;   /* IE */
+      }
+    </style>
+  </head>
+  <body>
+
+    <div class="game-container">
+      <canvas id="loadingCanvas" oncontextmenu="event.preventDefault()" width="960" height="540"></canvas>
+      <canvas id="canvas" oncontextmenu="event.preventDefault()" width="960" height="540" style="display: none;"></canvas>
+    </div>
+
+    <script type='text/javascript'>
+      var loadingContext = document.getElementById('loadingCanvas').getContext('2d');
+      
+      function drawLoadingText(text) {
+        var canvas = loadingContext.canvas;
+        loadingContext.fillStyle = "black";
+        loadingContext.fillRect(0, 0, canvas.width, canvas.height);
+      }
+
+      var Module = {
+        arguments: ["./game.love"],
+        INITIAL_MEMORY: 64000000,
+        printErr: console.error.bind(console),
+        canvas: (function() {
+          var canvas = document.getElementById('canvas');
+          canvas.addEventListener("webglcontextlost", function(e) { 
+            alert('WebGL context lost. You will need to reload the page.'); 
+            e.preventDefault(); 
+          }, false);
+          return canvas;
+        })(),
+        setStatus: function(text) {
+          if (text) {
+            drawLoadingText(text);
+          } else if (Module.remainingDependencies === 0) {
+            document.getElementById('loadingCanvas').style.display = 'none';
+            document.getElementById('canvas').style.display = 'block';
+          }
+        },
+        totalDependencies: 0,
+        remainingDependencies: 0,
+        monitorRunDependencies: function(left) {
+          this.remainingDependencies = left;
+          this.totalDependencies = Math.max(this.totalDependencies, left);
+          Module.setStatus(left ? 'Preparing...' : '');
+        }
+      };
+
+      var applicationLoad = function(e) {
+        Love(Module);
+      }
+    </script>
+    <script type="text/javascript" src="game.js"></script>
+    <script async type="text/javascript" src="love.js" onload="applicationLoad(this)"></script>
+  </body>
+</html>
