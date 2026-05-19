@@ -9,16 +9,25 @@
 <link rel="manifest" href="manifest.json">
 <meta name="theme-color" content="#0a0a12">
 
+<!-- Register the single all-in-one worker -->
 <script>
   if ('serviceWorker' in navigator) {
     window.addEventListener('load', () => {
-      navigator.serviceWorker.register('/sw.js')
-        .then((reg) => console.log('Service Worker registered successfully:', reg.scope))
-        .catch((err) => console.log('Service Worker registration failed:', err));
+      navigator.serviceWorker.register('./sw.js')
+        .then((reg) => {
+          console.log('PWA & COI Worker Ready:', reg.scope);
+          // If a new worker was found, reload the page to ensure COI headers apply instantly
+          if (reg.active && !navigator.serviceWorker.controller) {
+             window.location.reload();
+          }
+        })
+        .catch((err) => console.log('Worker registration failed:', err));
     });
   }
 </script>
-    <script src="coi-serviceworker.js"></script>
+
+<!-- REMOVE <script src="coi-serviceworker.js"></script> FROM HERE -->
+    
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no, user-scalable=no">
     <title>Ball Logic</title>
