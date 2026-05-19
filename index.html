@@ -1,33 +1,7 @@
 <!doctype html>
 <html lang="en-us">
   <head>
-    <link rel="icon" type="image/x-icon" href="favicon.ico">
-<link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
-<link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
-<link rel="apple-touch-icon" sizes="180x180" href="apple-touch-icon.png">
-
-<link rel="manifest" href="manifest.json">
-<meta name="theme-color" content="#0a0a12">
-
-<!-- Register the single all-in-one worker -->
-<script>
-  if ('serviceWorker' in navigator) {
-    window.addEventListener('load', () => {
-      navigator.serviceWorker.register('./sw.js')
-        .then((reg) => {
-          console.log('PWA & COI Worker Ready:', reg.scope);
-          // If a new worker was found, reload the page to ensure COI headers apply instantly
-          if (reg.active && !navigator.serviceWorker.controller) {
-             window.location.reload();
-          }
-        })
-        .catch((err) => console.log('Worker registration failed:', err));
-    });
-  }
-</script>
-
-<!-- REMOVE <script src="coi-serviceworker.js"></script> FROM HERE -->
-    
+    <script src="coi-serviceworker.js"></script>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no, user-scalable=no">
     <title>Ball Logic</title>
