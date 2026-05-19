@@ -1,44 +1,53 @@
-const CACHE_NAME = 'ball-logic-v1';
-// Add files you want to cache for offline use (HTML, CSS, JS, Audio)
+// ==========================================
+// 1. COI - SharedArrayBuffer Enabler Logic
+// ==========================================
+self.addEventListener("install", () => self.skipWaiting());
+self.addEventListener("activate", (event) => event.waitUntil(self.clients.claim()));
+
+self.addEventListener("fetch", (event) => {
+    if (event.request.mode === "navigate" || 
+       (event.request.mode === "no-cors" && event.request.destination === "script")) {
+        event.respondWith(
+            fetch(event.request)
+                .then((response) => {
+                    if (response.status === 0) return response;
+
+                    const newHeaders = new Headers(response.headers);
+                    newHeaders.set("Cross-Origin-Opener-Policy", "same-origin");
+                    newHeaders.set("Cross-Origin-Embedder-Policy", "require-corp");
+
+                    return new Response(response.body, {
+                        status: response.status,
+                        statusText: response.statusText,
+                        headers: newHeaders,
+                    });
+                })
+                .catch((e) => console.error(e))
+        );
+    }
+});
+
+// ==========================================
+// 2. PWA - Asset Caching Logic
+// ==========================================
+const CACHE_NAME = 'ball-logic-v2';
 const ASSETS_TO_CACHE = [
-  '/',
-  '/index.html',
-  '/manifest.json',
-  '/favicon.ico',
-  '/android-chrome-192x192.png',
-  '/android-chrome-512x512.png'
-  // Add your game.js, style.css, or audio tracks here if you have them
+  './',
+  './index.html',
+  './manifest.json',
+  './game.js',
+  './love.js',
+  './love.wasm',
+  './game.data',
+  './android-chrome-512x512.png'
 ];
 
-// Install Service Worker and cache core files
+// Append assets to cache without conflicting with COI installs
 self.addEventListener('install', (event) => {
   event.waitUntil(
     caches.open(CACHE_NAME).then((cache) => {
-      return cache.addAll(ASSETS_TO_CACHE);
-    })
-  );
-});
-
-// Activate and clean up old caches
-self.addEventListener('activate', (event) => {
-  event.waitUntil(
-    caches.keys().then((cacheNames) => {
-      return Promise.all(
-        cacheNames.map((cache) => {
-          if (cache !== CACHE_NAME) {
-            return caches.delete(cache);
-          }
-        })
-      );
-    })
-  );
-});
-
-// Network-first or Cache-first strategy for requests
-self.addEventListener('fetch', (event) => {
-  event.respondWith(
-    caches.match(event.request).then((cachedResponse) => {
-      return cachedResponse || fetch(event.request);
+      // Use setting to quietly gather resources
+      return cache.addAll(ASSETS_TO_CACHE).catch(err => console.log("Cache item missing: ", err));
     })
   );
 });
